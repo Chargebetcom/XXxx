@@ -84,14 +84,16 @@
           password: pass
         })
       })
-      .then(res => res.text())
+      .then(res => res.json())
       .then(response => {
-        if (response === "REGISTERED") {
+        if (response.status === "success") {
           document.getElementById("result").style.color = "green";
           document.getElementById("result").innerText = "تم التسجيل بنجاح! يمكنك الآن تسجيل الدخول.";
-        } else if (response === "PHONE_EXISTS") {
+        } else if (response.message === "PHONE_EXISTS") {
+          document.getElementById("result").style.color = "red";
           document.getElementById("result").innerText = "رقم الهاتف مسجل مسبقًا.";
         } else {
+          document.getElementById("result").style.color = "red";
           document.getElementById("result").innerText = "حدث خطأ أثناء التسجيل.";
         }
       });
@@ -111,22 +113,22 @@
       })
       .then(res => res.json())
       .then(data => {
-        if (data.name) {
+        if (data.status === "success") {
           document.getElementById("registerBox").style.display = "none";
           document.getElementById("loginBox").style.display = "none";
           document.getElementById("result").innerText = "";
           document.getElementById("userInfo").style.display = "block";
           document.getElementById("userInfo").innerHTML = `
-            <h3>مرحبا ${data.name}</h3>
+            <h3>مرحبًا ${data.name}</h3>
             <p>رقم هاتفك: ${data.phone}</p>
             <p>رصيدك الحالي: ${data.balance} درهم</p>
           `;
         } else {
-          document.getElementById("result").innerText = "بيانات الدخول غير صحيحة.";
+          document.getElementById("result").innerText = "خطأ: " + data.message;
         }
       })
       .catch(err => {
-        document.getElementById("result").innerText = "حدث خطأ أثناء تسجيل الدخول.";
+        document.getElementById("result").innerText = "فشل الاتصال بالخادم.";
       });
     }
   </script>
