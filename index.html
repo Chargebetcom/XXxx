@@ -2,46 +2,52 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>محفظة الموظفين</title>
+  <title>نظام المحفظة الإلكترونية</title>
   <style>
     body {
       font-family: Arial;
       padding: 20px;
       background-color: #f1f1f1;
+      direction: rtl;
     }
     .box {
       background: white;
-      padding: 15px;
-      margin-bottom: 20px;
+      padding: 20px;
+      margin: 20px auto;
       border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       max-width: 400px;
     }
-    input {
-      display: block;
-      width: 95%;
+    input, button {
+      width: 100%;
       margin-bottom: 10px;
-      padding: 8px;
+      padding: 10px;
+      font-size: 16px;
       border-radius: 5px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
     }
     button {
-      padding: 10px 15px;
       background-color: #2e8b57;
       color: white;
-      border: none;
-      border-radius: 5px;
       cursor: pointer;
+      border: none;
     }
     #userInfo {
-      background-color: #e7f5e1;
+      background-color: #e0ffe0;
       padding: 15px;
       border-radius: 10px;
+    }
+    #result {
+      margin-top: 10px;
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
 
+  <!-- تسجيل حساب جديد -->
   <div class="box" id="registerBox">
     <h3>تسجيل حساب جديد</h3>
     <input type="text" id="reg_name" placeholder="الاسم الكامل">
@@ -51,6 +57,7 @@
     <button onclick="register()">تسجيل</button>
   </div>
 
+  <!-- تسجيل الدخول -->
   <div class="box" id="loginBox">
     <h3>تسجيل الدخول</h3>
     <input type="text" id="login_phone" placeholder="رقم الهاتف">
@@ -58,8 +65,11 @@
     <button onclick="login()">دخول</button>
   </div>
 
-  <div id="userInfo" style="display:none"></div>
-  <div id="result" style="margin-top:10px; color:red;"></div>
+  <!-- عرض معلومات المستخدم -->
+  <div id="userInfo" class="box" style="display:none"></div>
+
+  <!-- رسائل الحالة -->
+  <div id="result"></div>
 
   <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbzEYiUCD-y785P8v6X6IE6hyp7_gWh-J9MokiTXB1JBOP4Lh88zeSs_tAz2KCTIrH9RHQ/exec";
@@ -69,6 +79,11 @@
       const phone = document.getElementById("reg_phone").value.trim();
       const pass = document.getElementById("reg_pass").value.trim();
       const passConfirm = document.getElementById("reg_pass_confirm").value.trim();
+
+      if (!name || !phone || !pass || !passConfirm) {
+        document.getElementById("result").innerText = "الرجاء ملء جميع الحقول.";
+        return;
+      }
 
       if (pass !== passConfirm) {
         document.getElementById("result").innerText = "كلمة السر غير متطابقة!";
@@ -96,12 +111,20 @@
           document.getElementById("result").style.color = "red";
           document.getElementById("result").innerText = "حدث خطأ أثناء التسجيل.";
         }
+      })
+      .catch(err => {
+        document.getElementById("result").innerText = "خطأ في الاتصال بالسيرفر.";
       });
     }
 
     function login() {
       const phone = document.getElementById("login_phone").value.trim();
       const pass = document.getElementById("login_pass").value.trim();
+
+      if (!phone || !pass) {
+        document.getElementById("result").innerText = "الرجاء إدخال رقم الهاتف وكلمة السر.";
+        return;
+      }
 
       fetch(scriptURL, {
         method: 'POST',
@@ -111,33 +134,25 @@
           password: pass
         })
       })
-      .then(res => res.text()) // نستقبل الرد كنص أولاً
-      .then(text => {
-        document.getElementById("result").innerText = "نص الرد من السيرفر:\n" + text;
-
-        try {
-          const data = JSON.parse(text);
-
-          if (data.status === "success") {
-            document.getElementById("registerBox").style.display = "none";
-            document.getElementById("loginBox").style.display = "none";
-            document.getElementById("result").innerText = "";
-            document.getElementById("userInfo").style.display = "block";
-            document.getElementById("userInfo").innerHTML = `
-              <h3>مرحبًا ${data.name}</h3>
-              <p>رقم هاتفك: ${data.phone}</p>
-              <p>رصيدك الحالي: ${data.balance} درهم</p>
-            `;
-          } else {
-            document.getElementById("result").innerText = "خطأ: " + data.message;
-          }
-
-        } catch (e) {
-          document.getElementById("result").innerText += "\n(تعذر تحويل الرد إلى JSON)";
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          // إخفاء النماذج
+          document.getElementById("registerBox").style.display = "none";
+          document.getElementById("loginBox").style.display = "none";
+          document.getElementById("result").innerText = "";
+          document.getElementById("userInfo").style.display = "block";
+          document.getElementById("userInfo").innerHTML = `
+            <h3>مرحبًا ${data.name}</h3>
+            <p><strong>رقم هاتفك:</strong> ${data.phone}</p>
+            <p><strong>رصيدك الحالي:</strong> ${data.balance} درهم</p>
+          `;
+        } else {
+          document.getElementById("result").innerText = "بيانات الدخول غير صحيحة.";
         }
       })
       .catch(err => {
-        document.getElementById("result").innerText = "فشل الاتصال بالخادم: " + err;
+        document.getElementById("result").innerText = "فشل الاتصال بالخادم.";
       });
     }
   </script>
