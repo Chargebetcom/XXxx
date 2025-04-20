@@ -111,24 +111,33 @@
           password: pass
         })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "success") {
-          document.getElementById("registerBox").style.display = "none";
-          document.getElementById("loginBox").style.display = "none";
-          document.getElementById("result").innerText = "";
-          document.getElementById("userInfo").style.display = "block";
-          document.getElementById("userInfo").innerHTML = `
-            <h3>مرحبًا ${data.name}</h3>
-            <p>رقم هاتفك: ${data.phone}</p>
-            <p>رصيدك الحالي: ${data.balance} درهم</p>
-          `;
-        } else {
-          document.getElementById("result").innerText = "خطأ: " + data.message;
+      .then(res => res.text()) // نستقبل الرد كنص أولاً
+      .then(text => {
+        document.getElementById("result").innerText = "نص الرد من السيرفر:\n" + text;
+
+        try {
+          const data = JSON.parse(text);
+
+          if (data.status === "success") {
+            document.getElementById("registerBox").style.display = "none";
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("result").innerText = "";
+            document.getElementById("userInfo").style.display = "block";
+            document.getElementById("userInfo").innerHTML = `
+              <h3>مرحبًا ${data.name}</h3>
+              <p>رقم هاتفك: ${data.phone}</p>
+              <p>رصيدك الحالي: ${data.balance} درهم</p>
+            `;
+          } else {
+            document.getElementById("result").innerText = "خطأ: " + data.message;
+          }
+
+        } catch (e) {
+          document.getElementById("result").innerText += "\n(تعذر تحويل الرد إلى JSON)";
         }
       })
       .catch(err => {
-        document.getElementById("result").innerText = "فشل الاتصال بالخادم.";
+        document.getElementById("result").innerText = "فشل الاتصال بالخادم: " + err;
       });
     }
   </script>
